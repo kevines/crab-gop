@@ -1,3 +1,4 @@
+import request from '@/utils/request'
 /**
  * 分页查询蟹券交易记录列表
  * @param {} query 

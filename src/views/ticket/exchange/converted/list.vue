@@ -57,76 +57,73 @@
       highlight-current-row
     >
 
-      <el-table-column align="center" label="考试名称" prop="examName" />
+      <el-table-column align="center" label="兑换券名称" prop="ticketName" />
 
-      <el-table-column align="center" label="是否发布" prop="isPublish" width="200px">
+      <el-table-column align="center" label="兑换码" prop="ticketNo" />
+
+      <el-table-column align="center" label="商品名称" prop="goodName" />
+      <el-table-column align="center" label="商品规格" prop="specification" />
+      <el-table-column align="center" label="商品图片" prop="goodPic" >
         <template slot-scope="scope">
-          <el-switch
-            Fstyle="display: block"
-            v-model="scope.row.isPublish"
-            active-color="#13ce66"
-            inactive-color="#ff4949"
-            active-text="上线"
-            inactive-text="下线"
-            @change="changePublishStatus(scope.row.id, scope.row.isPublish)"
-          />
+          <img :src="scope.row.goodPic" width="40">
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="是否需要审核" prop="isPermission">
+      <el-table-column align="center" label="商品数量" prop="goodNum" />
+
+      <el-table-column align="center" label="兑换状态" prop="isExchange">
         <template slot-scope="scope">
           <el-tag
-            :type="scope.row.isPermission?'success':'danger'"
-          >{{ scope.row.isPermission ? '需要审核' : '不需要审核' }}</el-tag>
+            :type="scope.row.isExchange?'success':'danger'"
+          >{{ scope.row.isExchange ? '已兑换' : '未兑换' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="活动状态" prop="status">
+
+      <el-table-column align="center" label="发货状态" prop="isSend">
         <template slot-scope="scope">
-          <el-tag type="warning" v-if="scope.row.status === 1">报名未开始</el-tag>
-          <el-tag type="success" v-if="scope.row.status === 2">报名中</el-tag>
-          <el-tag type="danger" v-if="scope.row.status === 3">报名结束</el-tag>
+          <el-tag
+            :type="scope.row.isSend?'success':'danger'"
+          >{{ scope.row.isSend ? '已发货' : '未发货' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="考试状态" prop="isPublish">
-        <template slot-scope="scope">
-          <el-tag type="warning" v-if="scope.row.examPaperResult.status === 1">考试未开始</el-tag>
-          <el-tag type="success" v-if="scope.row.examPaperResult.status === 2">考试中</el-tag>
-          <el-tag type="danger" v-if="scope.row.examPaperResult.status === 3">考试已结束</el-tag>
-        </template>
-      </el-table-column>
+
+      <el-table-column align="center" label="兑换截止日期" prop="expiryDate" />
+
+      <el-table-column align="center" label="创建日期" prop="gmtCreated" />
+
       
-
-      <el-table-column align="center" label="创建时间" prop="gmtCreated" />
-
-      <el-table-column align="center" label="修改时间" prop="gmtModified" />
 
       <el-table-column align="center" label="操作" width="300" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button type="primary" size="small" @click="handleDetail(scope.row)">查看</el-button>
-          <el-button type="primary" size="small" @click="handleUpdate(scope.row)">编辑</el-button>
+          <el-button type="primary" size="small" @click="handleDetail(scope.row)">详情</el-button>
+          <el-button type="primary" size="small" @click="handleEdit(scope.row)">编辑</el-button>
           <el-button type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
-          <el-button type="success" size="small" @click="postExamNotice(scope.row)">发送通知</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 新增蟹券对话框 -->
     <el-dialog :visible.sync="categoryDialogVisible" title="选择类目" width="800">
-      <el-form ref="categoryInfo" :model="categoryInfo" :rules="rules" label-position="left" label-width="100px">
-        <el-form-item label="所属类目" prop="categoryId">
-          <el-select v-model="categoryInfo.categoryId" placeholder="请选择" style="width: 400px;">
-            <el-option
-              v-for="item in categoryList"
-              :key="item.id+'@@'+item.name"
-              :label="item.name"
-              :value="item.id+'@@'+item.name"
-            />
-          </el-select>
+      <el-form ref="ticketInfo" :model="ticketInfo" :rules="rules" label-position="left" label-width="100px">
+        <el-form-item label="所属类目" prop="goodName">
+          <el-input v-model="ticketInfo.goodName" placeholder="商品名称" />
+        </el-form-item>
+        <el-form-item label="类目图标" prop="goodPic">
+          <el-upload
+            :headers="headers"
+            :action="uploadPath"
+            :show-file-list="false"
+            :on-success="uploadPicUrl"
+            class="avatar-uploader"
+            accept=".jpg,.jpeg,.png,.gif">
+            <img v-if="dataForm.imgUrl" :src="dataForm.imgUrl" class="avatar">
+            <i v-else class="el-icon-plus avatar-uploader-icon"/>
+          </el-upload>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="categoryDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="handleToAdd">确 定</el-button>
+        <el-button type="primary" @click="addTicket">确 定</el-button>
       </span>
     </el-dialog>
 
@@ -145,9 +142,11 @@
 </template>
 
 <script>
-import { createTicket } from "@/api/ticket/ticket";
+import { createTicket,queryTicketList } from "@/api/ticket/ticket";
+import { uploadPath } from '@/api/public'
 import BackToTop from "@/components/BackToTop";
 import Pagination from "@/components/Pagination"; // Secondary package based on el-pagination
+import { getToken } from '@/utils/auth'
 
 export default {
   name: "examList",
@@ -162,15 +161,33 @@ export default {
         limit: 10
       },
       list: [],
-      schoolList: [],
-      paperList: [],
-      surveyList: [],
-      drawList: [],
+      uploadPath,
+      categoryDialogVisible: false,
+      ticketInfo: {
+        goodName: "",   //商品名称
+        ticketName: "",   //兑换券名称
+        specification: "",  //商品规格详情
+        stock: "", //生成兑换券张数
+        expiryDate: "",  //截止日期
+        goodPic: "",   //商品图片
+        goodNum: ""   //商品个数
+      },
+      dataForm: {
+        name: '',
+        imgUrl: ''
+      },
       total: 0,
       listLoading: false,
       rules: {},
       downloadLoading: false
     };
+  },
+  computed: {
+    headers() {
+      return {
+        'Authorization': getToken()
+      }
+    }
   },
   created() {
     this.getList();
@@ -182,28 +199,14 @@ export default {
      */
     getList() {
       const para = {
-        examId: this.searchForm.examId,
-        schoolId: this.searchForm.schoolId,
-        paperId: this.searchForm.paperId,
-        surveyPaperId: this.searchForm.surveyPaperId,
-        drawRuleId: this.searchForm.drawRuleId,
-        startDate: this.searchForm.gmtCreated[0]
-          ? this.$moment(new Date(this.searchForm.gmtCreated[0])).format(
-              "YYYY-MM-DD"
-            )
-          : "",
-        endDate: this.searchForm.gmtCreated[1]
-          ? this.$moment(new Date(this.searchForm.gmtCreated[1])).format(
-              "YYYY-MM-DD"
-            )
-          : "",
-        isPublish: this.searchForm.isPublish,
-        isPermission: this.searchForm.isPermission,
+        ticketName: this.searchForm.ticketName,
+        goodName: this.searchForm.goodName,
+        ticketNo: this.searchForm.ticketNo,
         page: this.searchForm.page,
         limit: this.searchForm.limit
       };
       this.listLoading = true;
-      queryExamList(para)
+      queryTicketList(para)
         .then(res => {
           this.list = res.data.data;
           this.total = Number(res.data.count);
@@ -231,13 +234,19 @@ export default {
       this.getList();
     },
     /**
-     * 批量新增
+     * 批量新增，弹出新增窗口
      */
     handleAdd() {
       this.categoryDialogVisible = true
     },
     /**
-     * 查看考试活动详情
+     * 添加兑换券
+     */
+    addTicket() {
+
+    },
+    /**
+     * 查看兑换券详情
      */
     handleDetail(row) {
       this.$router.push({
@@ -248,25 +257,10 @@ export default {
       });
     },
     /**
-     * 修改考试活动信息
+     * 上传蟹券商品图片成功回调
      */
-    handleUpdate(row) {
-      const para = {
-        id: row.id
-      };
-      checkExam(para)
-        .then(res => {
-          this.$router.push({
-            path: "/activity/activity/edit",
-            query: {
-              id: row.id
-            }
-          });
-        })
-        .catch(response => {
-          this.$message.error(response.data.message);
-          this.getList();
-        });
+    uploadPicUrl: function(res) {
+      this.dataForm.imgUrl = res.data
     },
     /**
      * 删除考试活动记录

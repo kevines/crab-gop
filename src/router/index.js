@@ -133,33 +133,43 @@ export const asyncRouterMap = [
     },
     children: [
       {
+        path: '/exchange/specification/list',
+        component: () => import('@/views/ticket/exchange/specification/list'),
+        name: 'noExchangeList',
+        meta: {
+          title: '兑换券管理',
+          noCache: true
+        }
+      },
+      {
         path: 'all/exchange/list',
-        component: () => import('@/views/college/school/detail'),
+        component: () => import('@/views/ticket/exchange/all/list'),
         name: 'allExchangeList',
         meta: {
-          title: '总兑换券',
+          title: '总兑换列表',
           noCache: true
         }
       },
       {
         path: 'have/exchange/list',
-        component: () => import('@/views/college/course/list'),
+        component: () => import('@/views/ticket/exchange/converted/list'),
         name: 'haveExchangeList',
         meta: {
-          title: '已兑换券',
-          noCache: true
-        }
-      },
-      {
-        path: 'no/have/exchange/list',
-        component: () => import('@/views/college/teacher/list'),
-        name: 'noExchangeList',
-        meta: {
-          title: '未兑换券',
+          title: '已兑换列表',
           noCache: true
         }
       },
       
+      {
+        path: 'all/exchange/detail',
+        component: () => import('@/views/ticket/exchange/all/detail'),
+        name: 'allExchangeDetail',
+        meta: {
+          title: '总兑换券详情',
+          noCache: true
+        },
+        hidden: true
+      }
     ]
   },
   // 系统配置
