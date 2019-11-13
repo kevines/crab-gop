@@ -5,13 +5,36 @@
     <div class="filter-container">
       <el-form ref="searchForm" :model="searchForm" :inline="true">
         <el-form-item label="兑换券名称" prop="ticketName">
-          <el-input
-            v-model="searchForm.ticketName"
-            clearable
-            class="filter-item"
-            style="width: 200px;"
-            placeholder="兑换券名称"
-          />
+          <el-select v-model="searchForm.ticketName" placeholder="请选择">
+            <el-option
+              v-for="item in ticketSpecificationList"
+              :key="item.code"
+              :label="item.name"
+              :value="item.code"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="兑换状态" prop="isExchange">
+          <el-select v-model="searchForm.isExchange" placeholder="请选择">
+            <el-option
+              v-for="item in isExchangeList"
+              :key="item.code"
+              :label="item.name"
+              :value="item.code"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="发货状态" prop="isSend">
+          <el-select v-model="searchForm.isSend" placeholder="请选择">
+            <el-option
+              v-for="item in isSendList"
+              :key="item.code"
+              :label="item.name"
+              :value="item.code"
+            />
+          </el-select>
         </el-form-item>
         
         <el-form-item label="兑换码" prop="ticketNo">
@@ -24,15 +47,8 @@
           />
         </el-form-item>
         
-
         <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleQuery">查询</el-button>
         <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleRest">重置</el-button>
-        <el-button
-          class="filter-item"
-          type="primary"
-          icon="el-icon-circle-plus-outline"
-          @click="handleAdd"
-        >生成兑换券</el-button>
       </el-form>
     </div>
 
@@ -59,7 +75,11 @@
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="商品数量" prop="goodNum" />
+      <el-table-column align="center" label="商品数量" prop="goodNum">
+        <template slot-scope="scope">
+          {{scope.row.goodNum}}对
+        </template>
+      </el-table-column>
 
       <el-table-column align="center" label="兑换状态" prop="isExchange">
         <template slot-scope="scope">
@@ -108,7 +128,7 @@
 </template>
 
 <script>
-import { createTicket,queryTicketList } from "@/api/ticket/ticket";
+import { createTicket,queryTicketList,queryTicketNameSelectList } from "@/api/ticket/ticket";
 import { uploadPath } from '@/api/public'
 import BackToTop from "@/components/BackToTop";
 import Pagination from "@/components/Pagination"; // Secondary package based on el-pagination
@@ -122,10 +142,34 @@ export default {
       searchForm: {
         ticketName: "", //兑换券名称
         ticketNo: "",  //兑换券编号
+        isExchange: "",
+        isSend: "",
         page: 1,
         limit: 10
       },
       list: [],
+      //兑换券名称下拉列表
+      ticketSpecificationList: [],
+      isExchangeList: [
+        {
+          code: true,
+          name: "已兑换"
+        },
+        {
+          code: false,
+          name: "未兑换"
+        }
+      ],
+      isSendList: [
+        {
+          code: true,
+          name: "已发货"
+        },
+        {
+          code: false,
+          name: "未发货"
+        }
+      ],
       uploadPath,
       categoryDialogVisible: false,
       total: 0,
@@ -141,6 +185,7 @@ export default {
     }
   },
   created() {
+    this.findTicketNameSelectList();
     this.getList();
   },
   methods: {
@@ -153,6 +198,8 @@ export default {
         ticketName: this.searchForm.ticketName,
         goodName: this.searchForm.goodName,
         ticketNo: this.searchForm.ticketNo,
+        isExchange: this.searchForm.isExchange,
+        isSend: this.searchForm.isSend,
         page: this.searchForm.page,
         limit: this.searchForm.limit
       };
@@ -184,7 +231,14 @@ export default {
       this.$refs["searchForm"].resetFields();
       this.getList();
     },
-   
+    /**
+     * 查询兑换券名称下拉列表
+     */
+    findTicketNameSelectList() {
+      queryTicketNameSelectList().then(res => {
+        this.ticketSpecificationList = res.data.data;
+      });
+    },
     /**
      * 查看兑换券详情
      */
@@ -234,10 +288,7 @@ export default {
             this.getList();
           });
       });
-    },
-   
-   
-   
+    }
   }
 };
 </script>

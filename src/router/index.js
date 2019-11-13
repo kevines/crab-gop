@@ -159,7 +159,6 @@ export const asyncRouterMap = [
           noCache: true
         }
       },
-      
       {
         path: 'all/exchange/detail',
         component: () => import('@/views/ticket/exchange/all/detail'),
@@ -169,7 +168,17 @@ export const asyncRouterMap = [
           noCache: true
         },
         hidden: true
-      }
+      },
+      {
+        path: 'have/exchange/detail',
+        component: () => import('@/views/ticket/exchange/converted/detail'),
+        name: 'haveExchangeDetail',
+        meta: {
+          title: '已兑换详情',
+          noCache: true
+        },
+        hidden: true
+      },
     ]
   },
   // 系统配置

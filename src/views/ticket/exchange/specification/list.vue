@@ -55,20 +55,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="商品数量" prop="goodNum" />
-
-      <el-table-column align="center" label="兑换状态" prop="isExchange">
-        <template slot-scope="scope">
-          <el-tag
-            :type="scope.row.isExchange?'success':'danger'"
-          >{{ scope.row.isExchange ? '已兑换' : '未兑换' }}</el-tag>
-        </template>
-      </el-table-column>
-
-      <el-table-column align="center" label="发货状态" prop="isSend">
-        <template slot-scope="scope">
-          <el-tag :type="scope.row.isSend?'success':'danger'">{{ scope.row.isSend ? '已发货' : '未发货' }}</el-tag>
-        </template>
+      <el-table-column align="center" label="商品数量" prop="goodNum">
+        <template slot-scope="scope">{{scope.row.goodNum}}对</template>
       </el-table-column>
 
       <el-table-column align="center" label="兑换截止日期" prop="expiryDate" />
@@ -77,20 +65,20 @@
 
       <el-table-column align="center" label="操作" width="300" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button type="primary" size="small" @click="handleEdit(scope.row)">导出Excel</el-button>
+          <el-button type="primary" size="small" @click="exportExcel(scope.row)">导出Excel</el-button>
           <el-button type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 新增蟹券对话框 -->
-    <el-dialog :visible.sync="categoryDialogVisible" title="添加兑换券" width="700">
+    <el-dialog :visible.sync="ticketDialogVisible" title="添加兑换券" width="700">
       <el-form
         ref="ticketInfo"
         :model="ticketInfo"
         :rules="rules"
         label-position="left"
-        label-width="100px"
+        label-width="120px"
       >
         <el-form-item label="兑换券名称：" prop="ticketName">
           <el-input v-model="ticketInfo.ticketName" placeholder="兑换券名称" />
@@ -102,10 +90,10 @@
           <el-input v-model="ticketInfo.specification" placeholder="商品规格" />
         </el-form-item>
         <el-form-item label="商品数量：" prop="goodNum">
-          <el-input v-model="ticketInfo.goodNum" placeholder="商品数量/对" />
+          <el-input v-model="ticketInfo.goodNum" placeholder="商品数量/对" maxlength="2"/>
         </el-form-item>
         <el-form-item label="兑换券张数：" prop="stock">
-          <el-input v-model="ticketInfo.stock" placeholder="生成兑换券张数" />
+          <el-input v-model="ticketInfo.stock" placeholder="生成兑换券张数" maxlength="5"/>
         </el-form-item>
         <el-form-item label="截止日期：" prop="expiryDate">
           <template>
@@ -129,7 +117,7 @@
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="categoryDialogVisible = false">取 消</el-button>
+        <el-button @click="ticketDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="addTicket">确 定</el-button>
       </span>
     </el-dialog>
@@ -164,6 +152,26 @@ export default {
   name: "examList",
   components: { BackToTop, Pagination },
   data() {
+    /**
+     * 选择不限定考试人数时对人数不做校验，否则需要做校验
+     */
+    let checkGoodNum = (rule, value, callback) => {
+      if (Number(value) && value % 1 === 0 && value > 0) {
+        callback();
+      } else {
+        return callback(new Error("请输入1～99之间的整数！"));
+      }
+    };
+    /**
+     * 生成的兑换券张数
+     */
+    let checkStockNum = (rule, value, callback) => {
+      if (Number(value) && value % 1 === 0 && value > 0) {
+        callback();
+      } else {
+        return callback(new Error("请输入1～99999之间的整数！"));
+      }
+    };
     return {
       searchForm: {
         ticketName: "", //兑换券名称
@@ -174,7 +182,7 @@ export default {
       },
       list: [],
       uploadPath,
-      categoryDialogVisible: false,
+      ticketDialogVisible: false,
       ticketInfo: {
         goodName: "", //商品名称
         ticketName: "", //兑换券名称
@@ -192,7 +200,27 @@ export default {
       ticketSpecificationList: [],
       total: 0,
       listLoading: false,
-      rules: {},
+      rules: {
+        ticketName: [
+          { required: true, message: "请输入兑换券名称", trigger: "blur" }
+        ],
+        goodName: [
+          { required: true, message: "请输入套餐名称", trigger: "blur" }
+        ],
+        specification: [
+          { required: true, message: "请输入商品规格名称", trigger: "blur" }
+        ],
+        goodNum: [{ validator: checkGoodNum, trigger: "blur" }],
+        stock: [
+          { validator: checkStockNum, trigger: "blur" }
+        ],
+        expiryDate: [
+          { required: true, message: "请选择兑换截止日期", trigger: "blur" }
+        ],
+        goodPic: [
+          { required: true, message: "请上传商品图片", trigger: "blur" }
+        ]
+      },
       downloadLoading: false
     };
   },
@@ -258,35 +286,41 @@ export default {
      * 批量新增，弹出新增窗口
      */
     handleAdd() {
-      this.categoryDialogVisible = true;
+      this.ticketDialogVisible = true;
     },
     /**
      * 添加兑换券
      */
     addTicket() {
-      const para = {
-        ticketName: this.ticketInfo.ticketName,
-        specification: this.ticketInfo.specification,
-        stock: this.ticketInfo.stock,
-        expiryDate: this.ticketInfo.expiryDate
-          ? this.$moment(new Date(this.ticketInfo.expiryDate)).format(
-              "YYYY-MM-DD HH:mm:ss"
-            )
-          : "",
-        goodName: this.ticketInfo.goodName,
-        goodPic: this.dataForm.imgUrl,
-        goodNum: this.ticketInfo.goodNum
-      };
-      createTicket(para)
-        .then(res => {
-          this.$message.success(res.data.message);
-          this.categoryDialogVisible = true;
-          this.getList();
-        })
-        .catch(res => {
-          this.$message.error(response.data.message);
-          this.getList();
-        });
+      this.$refs["ticketInfo"].validate(valid => {
+        if (valid) {
+          const para = {
+            ticketName: this.ticketInfo.ticketName,
+            specification: this.ticketInfo.specification,
+            stock: this.ticketInfo.stock,
+            expiryDate: this.ticketInfo.expiryDate
+              ? this.$moment(new Date(this.ticketInfo.expiryDate)).format(
+                  "YYYY-MM-DD HH:mm:ss"
+                )
+              : "",
+            goodName: this.ticketInfo.goodName,
+            goodPic: this.dataForm.imgUrl,
+            goodNum: this.ticketInfo.goodNum
+          };
+          createTicket(para)
+            .then(res => {
+              this.$message.success(res.data.message);
+              this.ticketDialogVisible = false;
+              this.getList();
+            })
+            .catch(res => {
+              this.$message.error(response.data.message);
+              this.getList();
+            });
+        } else {
+          return false;
+        }
+      });
     },
     /**
      * 查看兑换券详情
@@ -304,6 +338,7 @@ export default {
      */
     uploadPicUrl: function(res) {
       this.dataForm.imgUrl = res.data;
+      this.ticketInfo.goodPic = res.data;
     },
     /**
      * 删除兑换券属性
@@ -332,6 +367,13 @@ export default {
             this.getList();
           });
       });
+    },
+    exportExcel(row) {
+      const url =
+        process.env.BASE_API +
+        "/exchange/ticket/specification/export/excel.do?id=" +
+        row.id;
+      window.location.href = url;
     }
   }
 };

@@ -82,3 +82,14 @@ export function deleteTicketSpecification(query) {
         params: query
     });
 }
+
+/**
+ * 查询已兑换的蟹券列表
+ */
+export function queryConvertedTicketList(query) {
+    return request({
+        url: '/exchange/ticket/record/page/list.do',
+        method: 'get',
+        params: query
+    });
+}
