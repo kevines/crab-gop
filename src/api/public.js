@@ -2,6 +2,7 @@ import request from '@/utils/request'
 // 上传api
 const uploadPath = process.env.BASE_API + '/upload/image.do'
 const uploadFilePath = process.env.BASE_API + '/upload/file.do'
+const uploadMiniPath = process.env.BASE_API + '/upload/mini/image.do'
 // const uploadPath = '/mgr/upload'
 
 const headImgUploadPath = '/mgr/upload'
@@ -25,6 +26,6 @@ export function deleteFile(param) {
     params: param
   })
 }
-export { uploadPath }
+export { uploadPath, uploadMiniPath }
 export { headImgUploadPath }
 export { uploadFilePath }

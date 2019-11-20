@@ -105,7 +105,7 @@
         <el-form-item label="商品图片：" prop="goodPic">
           <el-upload
             :headers="headers"
-            :action="uploadPath"
+            :action="uploadMiniPath"
             :show-file-list="false"
             :on-success="uploadPicUrl"
             class="avatar-uploader"
@@ -143,7 +143,7 @@ import {
   queryTicketNameSelectList,
   deleteTicketSpecification
 } from "@/api/ticket/ticket";
-import { uploadPath } from "@/api/public";
+import { uploadMiniPath } from "@/api/public";
 import BackToTop from "@/components/BackToTop";
 import Pagination from "@/components/Pagination"; // Secondary package based on el-pagination
 import { getToken } from "@/utils/auth";
@@ -181,7 +181,7 @@ export default {
         limit: 10
       },
       list: [],
-      uploadPath,
+      uploadMiniPath,
       ticketDialogVisible: false,
       ticketInfo: {
         goodName: "", //商品名称
@@ -362,12 +362,14 @@ export default {
             this.getList();
           })
           .catch(response => {
-            console.log(response);
             this.$message.error(response.data.message);
             this.getList();
           });
       });
     },
+    /**
+     * 导出Excel
+     */
     exportExcel(row) {
       const url =
         process.env.BASE_API +
