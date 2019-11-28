@@ -6,7 +6,7 @@ import { getToken } from '@/utils/auth'
 // create an axios instance
 const service = axios.create({
   baseURL: process.env.BASE_API, // api 的 base_url
-  timeout: 5000 // request timeout
+  timeout: 1000 * 60 // request timeout
 })
 
 // request interceptor
@@ -93,19 +93,19 @@ service.interceptors.response.use(
       Message({
         message: txt,
         type: 'error',
-        duration: 5 * 1000
+        duration: 60 * 1000
       })
     } else if (errorCode === 500) {
       Message({
         message: txt,
         type: 'error',
-        duration: 5 * 1000
+        duration: 60 * 1000
       })
     } else {
       Message({
         message: txt,
         type: 'error',
-        duration: 5 * 1000
+        duration: 60 * 1000
       })
     }
     // Message({

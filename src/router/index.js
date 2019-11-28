@@ -133,7 +133,7 @@ export const asyncRouterMap = [
     },
     children: [
       {
-        path: '/exchange/specification/list',
+        path: 'exchange/specification/list',
         component: () => import('@/views/ticket/exchange/specification/list'),
         name: 'noExchangeList',
         meta: {

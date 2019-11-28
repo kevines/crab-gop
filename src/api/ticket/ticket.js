@@ -23,6 +23,14 @@ export function queryTicketSpecificationList(query) {
     });
 }
 
+export function queryTicketSpecificationDetail(query) {
+    return request({
+        url: '/exchange/ticket/specification/detail.do',
+        method: 'get',
+        params: query
+    });
+}
+
 /**
  * 查询兑换券名称下拉列表
  * @param {*} query 

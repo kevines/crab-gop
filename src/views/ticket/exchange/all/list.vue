@@ -10,7 +10,7 @@
               v-for="item in ticketSpecificationList"
               :key="item.code"
               :label="item.name"
-              :value="item.code"
+              :value="item.name"
             />
           </el-select>
         </el-form-item>

@@ -5,7 +5,7 @@
     <div class="filter-container">
       <el-form ref="searchForm" :model="searchForm" :inline="true">
         <el-form-item label="兑换券名称" prop="ticketName">
-          <el-select v-model="searchForm.examId" placeholder="请选择">
+          <el-select v-model="searchForm.ticketName" placeholder="请选择">
             <el-option
               v-for="item in ticketSpecificationList"
               :key="item.code"
@@ -41,7 +41,7 @@
       v-loading="listLoading"
       :data="list"
       size="small"
-      element-loading-text="更新列表中......"
+      element-loading-text="操作执行中，请等待......"
       border
       fit
       highlight-current-row
@@ -65,6 +65,7 @@
 
       <el-table-column align="center" label="操作" width="300" class-name="small-padding fixed-width">
         <template slot-scope="scope">
+          <el-button type="primary" size="small" @click="handleEditDate(scope.row)">修改截止日期</el-button>
           <el-button type="primary" size="small" @click="exportExcel(scope.row)">导出Excel</el-button>
           <el-button type="danger" size="small" @click="handleDelete(scope.row)">删除</el-button>
         </template>
@@ -90,10 +91,10 @@
           <el-input v-model="ticketInfo.specification" placeholder="商品规格" />
         </el-form-item>
         <el-form-item label="商品数量：" prop="goodNum">
-          <el-input v-model="ticketInfo.goodNum" placeholder="商品数量/对" maxlength="2"/>
+          <el-input v-model="ticketInfo.goodNum" placeholder="商品数量/对" maxlength="2" />
         </el-form-item>
         <el-form-item label="兑换券张数：" prop="stock">
-          <el-input v-model="ticketInfo.stock" placeholder="生成兑换券张数" maxlength="5"/>
+          <el-input v-model="ticketInfo.stock" placeholder="生成兑换券张数" maxlength="5" />
         </el-form-item>
         <el-form-item label="截止日期：" prop="expiryDate">
           <template>
@@ -118,10 +119,26 @@
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="ticketDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="addTicket">确 定</el-button>
+        <el-button type="primary" @click="addTicket" :loading="loadingbut">{{loadingbuttext}}</el-button>
       </span>
     </el-dialog>
 
+    <!-- 修改截日期 -->
+    <el-dialog :visible.sync="dateDialogVisible" title="修改截止日期" width="700">
+      <el-form ref="ticketModel" :model="ticketModel" label-position="left" label-width="120px">
+        <el-form-item label="截止日期：" prop="expiryDate">
+          <template>
+            <div class="block">
+              <el-date-picker v-model="ticketModel.expiryDate" type="datetime" placeholder="选择日期时间"></el-date-picker>
+            </div>
+          </template>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dateDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="changeDate" >确 定</el-button>
+      </span>
+    </el-dialog>
     <pagination
       v-show="total>0"
       :total="total"
@@ -139,6 +156,8 @@
 <script>
 import {
   createTicket,
+  eidtTicket,
+  queryTicketSpecificationDetail,
   queryTicketSpecificationList,
   queryTicketNameSelectList,
   deleteTicketSpecification
@@ -153,7 +172,7 @@ export default {
   components: { BackToTop, Pagination },
   data() {
     /**
-     * 选择不限定考试人数时对人数不做校验，否则需要做校验
+     * 商品个数
      */
     let checkGoodNum = (rule, value, callback) => {
       if (Number(value) && value % 1 === 0 && value > 0) {
@@ -183,6 +202,10 @@ export default {
       list: [],
       uploadMiniPath,
       ticketDialogVisible: false,
+      dateDialogVisible: false,
+      loadingbut:false,
+      loadingbuttext: "确 定",
+      listLoading: false,
       ticketInfo: {
         goodName: "", //商品名称
         ticketName: "", //兑换券名称
@@ -192,6 +215,10 @@ export default {
         goodPic: "", //商品图片
         goodNum: "" //商品个数
       },
+      ticketModel: {
+        id: "",
+        expiryDate: ""
+      },
       dataForm: {
         name: "",
         imgUrl: ""
@@ -199,7 +226,6 @@ export default {
       //兑换券名称下拉列表
       ticketSpecificationList: [],
       total: 0,
-      listLoading: false,
       rules: {
         ticketName: [
           { required: true, message: "请输入兑换券名称", trigger: "blur" }
@@ -211,9 +237,7 @@ export default {
           { required: true, message: "请输入商品规格名称", trigger: "blur" }
         ],
         goodNum: [{ validator: checkGoodNum, trigger: "blur" }],
-        stock: [
-          { validator: checkStockNum, trigger: "blur" }
-        ],
+        stock: [{ validator: checkStockNum, trigger: "blur" }],
         expiryDate: [
           { required: true, message: "请选择兑换截止日期", trigger: "blur" }
         ],
@@ -307,20 +331,60 @@ export default {
             goodPic: this.dataForm.imgUrl,
             goodNum: this.ticketInfo.goodNum
           };
+          this.loadingbut = true;
+				  this.loadingbuttext = '添加中...';
           createTicket(para)
             .then(res => {
+              this.loadingbut = false;
+              this.loadingbuttext = '确 定';
+              this.getList();
               this.$message.success(res.data.message);
               this.ticketDialogVisible = false;
-              this.getList();
             })
             .catch(res => {
-              this.$message.error(response.data.message);
+              this.loadingbut = false;
+              this.loadingbuttext = '确 定';
               this.getList();
+              this.ticketDialogVisible = false;
+              this.$message.success("添加成功");
             });
         } else {
           return false;
         }
       });
+    },
+    //点击修改截止日期弹窗
+    handleEditDate(row) {
+      this.dateDialogVisible = true;
+      const para = {
+        id: row.id
+      };
+      queryTicketSpecificationDetail(para).then(res => {
+        this.ticketModel.expiryDate = res.data.expiryDate;
+        this.ticketModel.id = row.id
+      });
+    },
+    //修改截止日期
+    changeDate() {
+      const para = {
+        id: this.ticketModel.id,
+        expiryDate: this.ticketModel.expiryDate
+          ? this.$moment(new Date(this.ticketModel.expiryDate)).format(
+              "YYYY-MM-DD HH:mm:ss"
+            )
+          : ""
+      };
+      eidtTicket(para)
+        .then(res => {
+          this.$message.success(res.data.message);
+          this.getList();
+          this.dateDialogVisible = false;
+        })
+        .catch(respoonse => {
+          this.getList();
+          this.$message.error(response.data.message);
+          
+        });
     },
     /**
      * 查看兑换券详情
@@ -356,15 +420,21 @@ export default {
         const para = {
           id: row.id
         };
+        this.listLoading = true;
         deleteTicketSpecification(para)
           .then(res => {
-            this.$message.success(res.data.message);
+            this.listLoading = false;
             this.getList();
+            this.$message.success(res.data.message);
+            
           })
           .catch(response => {
-            this.$message.error(response.data.message);
+            this.listLoading = false;
             this.getList();
+            this.$message.success("删除成功");
+                   
           });
+          
       });
     },
     /**
