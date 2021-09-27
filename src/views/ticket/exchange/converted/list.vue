@@ -66,7 +66,7 @@
       </el-table-column>
 
       <el-table-column align="center" label="兑换码" prop="ticketNo" />
-
+      <el-table-column align="center" label="卡号" prop="cardNo" />
       <el-table-column align="center" label="兑换状态" prop="isExchange">
         <template slot-scope="scope">
           <el-tag

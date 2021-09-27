@@ -64,7 +64,7 @@
     >
 
       <el-table-column align="center" label="兑换券名称" prop="ticketName" />
-
+      <el-table-column align="center" label="卡号" prop="cardNo" />
       <el-table-column align="center" label="兑换码" prop="ticketNo" />
 
       <el-table-column align="center" label="商品名称" prop="goodName" />
