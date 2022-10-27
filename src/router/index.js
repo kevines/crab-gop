@@ -138,7 +138,7 @@ export const asyncRouterMap = [
         name: 'noExchangeList',
         meta: {
           title: '兑换券管理',
-          noCache: true
+          //noCache: true
         }
       },
       {
@@ -147,7 +147,7 @@ export const asyncRouterMap = [
         name: 'allExchangeList',
         meta: {
           title: '总兑换列表',
-          noCache: true
+          //noCache: true
         }
       },
       {
@@ -156,7 +156,7 @@ export const asyncRouterMap = [
         name: 'haveExchangeList',
         meta: {
           title: '已兑换列表',
-          noCache: true
+          //noCache: true
         }
       },
       {

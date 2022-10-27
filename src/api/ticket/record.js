@@ -36,6 +36,20 @@ export function sendTicketGood(query) {
 }
 
 /**
+ * 记录备注
+ * @param {*} query 
+ */
+export function remark(query) {
+    return request({
+        url: '/exchange/ticket/record/remark.do',
+        method: 'post',
+        params: query
+    });
+}
+
+
+
+/**
  * 撤销发货
  * @param {*} query 
  */

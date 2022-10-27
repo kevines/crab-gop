@@ -168,7 +168,7 @@ import Pagination from "@/components/Pagination"; // Secondary package based on 
 import { getToken } from "@/utils/auth";
 
 export default {
-  name: "examList",
+  name: "noExchangeList",
   components: { BackToTop, Pagination },
   data() {
     /**
